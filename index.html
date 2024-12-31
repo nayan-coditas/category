@@ -1,0 +1,426 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Category & Property Manager</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            margin: 0;
+            padding: 0;
+            background: #f9f9f9;
+            color: #333;
+        }
+
+        header {
+            background-color: #cc45df;
+            color: white;
+            padding: 20px;
+            text-align: center;
+            font-size: 24px;
+            font-weight: bold;
+        }
+
+        .container {
+            padding: 20px;
+            text-align: center;
+        }
+
+        .container button {
+            background-color: #cc45df;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            padding: 10px 20px;
+            font-size: 16px;
+            cursor: pointer;
+            margin: 10px;
+            transition: 0.3s ease;
+        }
+
+        .container button:hover {
+            background-color: #b0ffff;
+	    color:#000
+        }
+
+        #categories-container {
+            margin-top: 20px;
+        }
+
+        .category {
+            background: white;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            border-radius: 10px;
+            padding: 15px;
+            margin-bottom: 20px;
+            transition: 0.3s ease;
+        }
+
+        .category:hover {
+            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
+        }
+
+        .category-title {
+            font-size: 20px;
+            font-weight: bold;
+            color: #cc45df;
+            margin-bottom: 10px;
+        }
+
+        .property {
+            background: #f1f1f1;
+            border-radius: 5px;
+            padding: 10px;
+            margin: 10px 0;
+            font-size: 14px;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
+            z-index: 1000;
+            max-height: 80vh;
+            overflow-y: auto;
+            max-width: 400px;
+            width: 90%;
+        }
+
+        .modal.active {
+            display: block;
+        }
+
+        .modal h3 {
+            margin-top: 0;
+            color: #333;
+        }
+
+        .modal label {
+            display: block;
+            margin: 10px 0 5px;
+            font-size: 14px;
+            color: #555;
+        }
+
+        .modal input, .modal select {
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 14px;
+        }
+
+        .modal button {
+            background-color: #cc45df;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            padding: 10px 20px;
+            font-size: 14px;
+            cursor: pointer;
+            transition: 0.3s ease;
+        }
+
+        .modal button:hover {
+            background-color: #b0ffff;
+	    color:#000
+        }
+
+        .list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        .list li {
+            background: #e8f5e9;
+            padding: 8px 10px;
+            margin: 5px 0;
+            border-radius: 5px;
+            font-size: 14px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .list li button {
+            background: none;
+            border: none;
+            color: #e53935;
+            font-size: 14px;
+            cursor: pointer;
+        }
+
+        .list li button:hover {
+            color: #b71c1c;
+        }
+
+        #overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 999;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        Category & Property Manager
+    </header>
+
+    <div class="container">
+        <button onclick="openCategoryModal()">Add Category</button>
+        <button onclick="openPropertyModal()">Add Property</button>
+    </div>
+
+    <div id="categories-container"></div>
+
+    <div id="overlay"></div>
+
+    <!-- Add Category Modal -->
+    <div id="category-modal" class="modal">
+        <h3>Add Category</h3>
+        <label for="category-name">Category Name:</label>
+        <input type="text" id="category-name" placeholder="Enter category name">
+
+        <label for="category-sequence">Sequence:</label>
+        <input type="number" id="category-sequence" placeholder="Enter sequence number">
+
+        <button onclick="addCategory()">Save</button>
+        <button onclick="closeModal('category-modal')">Close</button>
+    </div>
+
+    <!-- Add Property Modal -->
+    <div id="property-modal" class="modal">
+        <h3>Add Property</h3>
+        <label for="property-name">Property Name:</label>
+        <input type="text" id="property-name" placeholder="Enter property name">
+
+        <label for="property-category">Category:</label>
+        <select id="property-category"></select>
+
+        <label for="property-sequence">Sequence:</label>
+        <input type="number" id="property-sequence" placeholder="Enter sequence number">
+
+        <label>Units:</label>
+        <input type="text" id="property-unit" placeholder="Enter unit">
+        <button type="button" onclick="addUnit()">Add Unit</button>
+        <ul id="unit-list" class="list"></ul>
+
+        <label>Values:</label>
+        <input type="text" id="property-value" placeholder="Enter value">
+        <button type="button" onclick="addValue()">Add Value</button>
+        <ul id="value-list" class="list"></ul>
+
+        <label for="property-required">
+            <input type="checkbox" id="property-required"> Mark as Required
+        </label>
+
+        <button onclick="addProperty()">Save</button>
+        <button onclick="closeModal('property-modal')">Close</button>
+    </div>
+
+    <script>
+        const categories = [
+            { name: "Specificationss", sequence: 1 },
+            { name: "Purchase Details", sequence: 2 }
+        ];
+        const properties = [
+            {
+                name: "Capacity",
+                values: [],
+                valueType: "number",
+                isRequired: true,
+                sequence: 1,
+                category: "Specificationss",
+                units: ["liter", "gallon"]
+            },
+            {
+                name: "RAM",
+                values: [16, 32],
+                valueType: "number",
+                isRequired: true,
+                sequence: 3,
+                category: "Specificationss",
+                units: ["GB", "KB"]
+            },
+            {
+                name: "Location",
+                values: [],
+                valueType: "number",
+                isRequired: true,
+                sequence: 1,
+                category: "Specificationss",
+                units: []
+            },
+            {
+                name: "Purchase Cost",
+                values: [],
+                valueType: "number",
+                isRequired: true,
+                sequence: 1,
+                category: "Purchase Details",
+                units: []
+            }
+        ];
+
+        let currentValues = [];
+        let currentUnits = [];
+
+        document.addEventListener("DOMContentLoaded", renderCategories);
+
+        function openCategoryModal() {
+            document.getElementById('overlay').style.display = 'block';
+            document.getElementById('category-modal').classList.add('active');
+        }
+
+        function openPropertyModal() {
+            document.getElementById('overlay').style.display = 'block';
+            const categorySelect = document.getElementById('property-category');
+            categorySelect.innerHTML = "";
+            categories.forEach(category => {
+                const option = document.createElement('option');
+                option.value = category.name;
+                option.textContent = category.name;
+                categorySelect.appendChild(option);
+            });
+
+            currentValues = [];
+            currentUnits = [];
+            document.getElementById('value-list').innerHTML = "";
+            document.getElementById('unit-list').innerHTML = "";
+            document.getElementById('property-modal').classList.add('active');
+        }
+
+        function closeModal(modalId) {
+            document.getElementById('overlay').style.display = 'none';
+            document.getElementById(modalId).classList.remove('active');
+        }
+
+        function addCategory() {
+            const name = document.getElementById('category-name').value.trim();
+            const sequence = parseInt(document.getElementById('category-sequence').value, 10);
+
+            if (!name || isNaN(sequence)) {
+                alert("Please provide valid category details.");
+                return;
+            }
+
+            const sequenceExists = categories.some(category => category.sequence === sequence);
+            if (sequenceExists) {
+                alert(`A category with sequence ${sequence} already exists. Please choose a different sequence.`);
+                return;
+            }
+
+            categories.push({ name, sequence });
+            categories.sort((a, b) => a.sequence - b.sequence);
+            renderCategories();
+
+            closeModal('category-modal');
+        }
+
+        function addValue() {
+            const valueInput = document.getElementById('property-value');
+            const value = valueInput.value.trim();
+            if (!value) {
+                alert("Please enter a valid value.");
+                return;
+            }
+
+            currentValues.push(value);
+            renderList(currentValues, 'value-list', 'value');
+            valueInput.value = "";
+        }
+
+        function addUnit() {
+            const unitInput = document.getElementById('property-unit');
+            const unit = unitInput.value.trim();
+            if (!unit) {
+                alert("Please enter a valid unit.");
+                return;
+            }
+
+            currentUnits.push(unit);
+            renderList(currentUnits, 'unit-list', 'unit');
+            unitInput.value = "";
+        }
+
+        function renderList(items, listId, type) {
+            const list = document.getElementById(listId);
+            list.innerHTML = "";
+            items.forEach(item => {
+                const listItem = document.createElement('li');
+                listItem.innerHTML = `${item} <button onclick="removeItem('${item}', '${type}')">Remove</button>`;
+                list.appendChild(listItem);
+            });
+        }
+
+        function removeItem(item, type) {
+            if (type === 'value') {
+                currentValues = currentValues.filter(v => v !== item);
+                renderList(currentValues, 'value-list', 'value');
+            } else if (type === 'unit') {
+                currentUnits = currentUnits.filter(u => u !== item);
+                renderList(currentUnits, 'unit-list', 'unit');
+            }
+        }
+
+        function addProperty() {
+            const name = document.getElementById('property-name').value.trim();
+            const category = document.getElementById('property-category').value;
+            const sequence = parseInt(document.getElementById('property-sequence').value, 10);
+            const isRequired = document.getElementById('property-required').checked;
+
+            if (!name || !category || isNaN(sequence)) {
+                alert("Please provide valid property details.");
+                return;
+            }
+
+            properties.push({ name, category, sequence, units: currentUnits, values: currentValues, isRequired });
+            renderCategories();
+
+            closeModal('property-modal');
+        }
+
+        function renderCategories() {
+            const container = document.getElementById('categories-container');
+            container.innerHTML = "";
+
+            categories.forEach(category => {
+                const categoryDiv = document.createElement('div');
+                categoryDiv.className = 'category';
+
+                const title = document.createElement('div');
+                title.className = 'category-title';
+                title.textContent = `${category.name} (Sequence: ${category.sequence})`;
+                categoryDiv.appendChild(title);
+
+                const categoryProperties = properties
+                    .filter(property => property.category === category.name)
+                    .sort((a, b) => a.sequence - b.sequence);
+
+                categoryProperties.forEach(property => {
+                    const propertyDiv = document.createElement('div');
+                    propertyDiv.className = 'property';
+                    propertyDiv.innerHTML = `<div>Name: ${property.name}</div> <div>Sequence: ${property.sequence}</div> <div>Units: [ ${property.units.join(', ')} ]</div> <div>Values: [ ${property.values.join(', ')} ]</div> <div>Required: ${property.isRequired}</div>`;
+                    categoryDiv.appendChild(propertyDiv);
+                });
+
+                container.appendChild(categoryDiv);
+            });
+        }
+    </script>
+</body>
+</html>
